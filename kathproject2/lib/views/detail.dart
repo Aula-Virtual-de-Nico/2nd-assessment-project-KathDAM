@@ -12,4 +12,6 @@ Window Title: {event title} (where {event title} is the title of the displayed e
   o Button to edit the event.
   o Button to delete the event (with confirmation dialog).
   o Button to save the event as a favorite.
-*/ 
+*/
+
+import 'package:flutter/material.dart';

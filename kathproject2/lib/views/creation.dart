@@ -15,4 +15,28 @@
   o Button to return to the event list (shows a confirmation dialog if there are
 unsaved changes).
 
-*/ 
+*/
+
+import 'package:flutter/material.dart';
+
+class CreationEvent extends StatelessWidget {
+  const CreationEvent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create New Event'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+           //info
+            print('Evento creado');
+          },
+          child: const Text('Create event'),
+        ),
+      ),
+    );
+  }
+}
