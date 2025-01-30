@@ -21,13 +21,53 @@ not be displayed.
  */
 import 'package:flutter/material.dart';
 import 'package:kathproject2/views/creation.dart';
+import 'package:kathproject2/views/detail.dart';
 
-void main() {
-  runApp(const MainView());
+class MainView extends StatefulWidget {
+  const MainView({super.key});
+
+  @override
+  State<MainView> createState() => _MainViewState();
 }
 
-class MainView extends StatelessWidget {
-  const MainView({super.key});
+class _MainViewState extends State<MainView> {
+  List<Event> events = [
+    Event(
+      id: '1',
+      title: 'Rock Concert',
+      description: 'A night of amazing rock music!',
+      date: DateTime(2025, 3, 15),
+      price: 50.0,
+      imageUrl: 'assets/concert.jpg',
+    ),
+    Event(
+      id: '2',
+      title: 'Comedy',
+      description: 'A great day with the famous "Gila"',
+      date: DateTime(2025, 5, 10),
+      price: 100.0,
+      imageUrl: 'assets/comedy.jpg',
+    ),
+    Event(
+      id: '3',
+      title: 'Art Expo',
+      description: 'Modern art exhibition',
+      date: DateTime(2023, 8, 20),
+      price: 20.0,
+      imageUrl: 'assets/expo.jpeg',
+    ),
+        Event(
+      id: '4',
+      title: 'Festivals in Valencia',
+      description: 'Bigsound in July',
+      date: DateTime(2023, 8, 20),
+      price: 20.0,
+      imageUrl: 'assets/festival.jpg',
+    )
+  ];
+
+  List<String> favoriteEvents = [];
+  bool showPastEvents = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,37 +77,142 @@ class MainView extends StatelessWidget {
         length: 4,
         child: Scaffold(
           appBar: AppBar(
+            title: const Text('Event List'),
             bottom: const TabBar(
               tabs: [
-                Tab(icon: Icon(Icons.favorite_border_rounded), text: "Favorites"),
+                Tab(
+                    icon: Icon(Icons.favorite_border_rounded),
+                    text: "Favorites"),
                 Tab(icon: Icon(Icons.date_range_rounded), text: "Date"),
                 Tab(icon: Icon(Icons.euro_symbol_rounded), text: "Price"),
-                Tab(icon: Icon(Icons.event_available_rounded), text: "Past Events"),
+                Tab(
+                    icon: Icon(Icons.event_available_rounded),
+                    text: "Past Events"),
               ],
             ),
-            title: const Text('Event List'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
                 onPressed: () {
-                  Navigator.push(context,MaterialPageRoute(builder: (context) => const CreationEvent()),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const CreationEvent()),
                   );
                 },
               ),
             ],
           ),
-          body: const TabBarView(
+          body: TabBarView(
             children: [
-              //cambiarlo por grid-type list of events 
-              Center(child: Text('Favorites Tab')),
-              Center(child: Text('Date Tab')),
-              Center(child: Text('Price Tab')),
-              Center(child: Text('Past Events Tab')),
-              
+              buildEventGrid(filterByFavorites: true),
+              buildEventGrid(sortBy: "date"),
+              buildEventGrid(sortBy: "price"),
+              buildEventGrid(showOnlyPastEvents: true),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget buildEventGrid(
+      {bool filterByFavorites = false,
+      String? sortBy,
+      bool showOnlyPastEvents = false}) {
+    List<Event> displayedEvents = List.from(events);
+
+    if (filterByFavorites) {
+      displayedEvents = displayedEvents
+          .where((event) => favoriteEvents.contains(event.id))
+          .toList();
+    }
+
+    if (showOnlyPastEvents) {
+      displayedEvents = displayedEvents
+          .where((event) => event.date.isBefore(DateTime.now()))
+          .toList();
+    } else {
+      displayedEvents = displayedEvents
+          .where((event) => event.date.isAfter(DateTime.now()))
+          .toList();
+    }
+
+    if (sortBy == "date") {
+      displayedEvents.sort((a, b) => a.date.compareTo(b.date));
+    } else if (sortBy == "price") {
+      displayedEvents.sort((a, b) => a.price.compareTo(b.price));
+    }
+
+    if (displayedEvents.isEmpty) {
+      return const Center(child: Text("No events available."));
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(8.0),
+      itemCount: displayedEvents.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
+        childAspectRatio: 0.8,
+      ),
+      itemBuilder: (context, index) {
+        final event = displayedEvents[index];
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => DetailEvent()));
+          },
+          child: Card(
+            elevation: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Image.network(event.imageUrl, fit: BoxFit.cover),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(event.title,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(event.description,
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      Text("📅 ${event.date.toLocal()}".split(' ')[0]),
+                      Text("💰 \$${event.price.toStringAsFixed(2)}"),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    favoriteEvents.contains(event.id)
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color:
+                        favoriteEvents.contains(event.id) ? Colors.red : null,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      if (favoriteEvents.contains(event.id)) {
+                        favoriteEvents.remove(event.id);
+                      } else {
+                        favoriteEvents.add(event.id);
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

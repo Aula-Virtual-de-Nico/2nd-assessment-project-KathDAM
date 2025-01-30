@@ -15,3 +15,25 @@ Window Title: {event title} (where {event title} is the title of the displayed e
 */
 
 import 'package:flutter/material.dart';
+
+class DetailEvent extends StatelessWidget {
+  const DetailEvent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Details Event: '),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+           //info
+            print('Detalle mostrado');
+          },
+          child: const Text('Details event'),
+        ),
+      ),
+    );
+  }
+}
