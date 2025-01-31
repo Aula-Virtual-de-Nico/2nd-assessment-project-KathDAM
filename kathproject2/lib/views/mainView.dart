@@ -20,8 +20,12 @@ not be displayed.
   Para ver ejemplos https://flutter.github.io/samples/material_3.html
  */
 import 'package:flutter/material.dart';
+import 'package:kathproject2/utils/eventservice.dart';
 import 'package:kathproject2/views/creation.dart';
 import 'package:kathproject2/views/detail.dart';
+import 'package:intl/intl.dart';
+import 'package:kathproject2/utils/event.dart';  
+
 
 class MainView extends StatefulWidget {
   const MainView({super.key});
@@ -31,42 +35,6 @@ class MainView extends StatefulWidget {
 }
 
 class _MainViewState extends State<MainView> {
-  List<Event> events = [
-    Event(
-      id: '1',
-      title: 'Rock Concert',
-      description: 'A night of amazing rock music!',
-      date: DateTime(2025, 3, 15),
-      price: 50.0,
-      imageUrl: 'assets/concert.jpg',
-    ),
-    Event(
-      id: '2',
-      title: 'Comedy',
-      description: 'A great day with the famous "Gila"',
-      date: DateTime(2025, 5, 10),
-      price: 100.0,
-      imageUrl: 'assets/comedy.jpg',
-    ),
-    Event(
-      id: '3',
-      title: 'Art Expo',
-      description: 'Modern art exhibition',
-      date: DateTime(2023, 8, 20),
-      price: 20.0,
-      imageUrl: 'assets/expo.jpeg',
-    ),
-        Event(
-      id: '4',
-      title: 'Festivals in Valencia',
-      description: 'Bigsound in July',
-      date: DateTime(2023, 8, 20),
-      price: 20.0,
-      imageUrl: 'assets/festival.jpg',
-    )
-  ];
-
-  List<String> favoriteEvents = [];
   bool showPastEvents = false;
 
   @override
@@ -120,29 +88,11 @@ class _MainViewState extends State<MainView> {
       {bool filterByFavorites = false,
       String? sortBy,
       bool showOnlyPastEvents = false}) {
-    List<Event> displayedEvents = List.from(events);
-
-    if (filterByFavorites) {
-      displayedEvents = displayedEvents
-          .where((event) => favoriteEvents.contains(event.id))
-          .toList();
-    }
-
-    if (showOnlyPastEvents) {
-      displayedEvents = displayedEvents
-          .where((event) => event.date.isBefore(DateTime.now()))
-          .toList();
-    } else {
-      displayedEvents = displayedEvents
-          .where((event) => event.date.isAfter(DateTime.now()))
-          .toList();
-    }
-
-    if (sortBy == "date") {
-      displayedEvents.sort((a, b) => a.date.compareTo(b.date));
-    } else if (sortBy == "price") {
-      displayedEvents.sort((a, b) => a.price.compareTo(b.price));
-    }
+    List<Event> displayedEvents = EventService.getEvents(
+      filterByFavorites: filterByFavorites,
+      sortBy: sortBy,
+      showOnlyPastEvents: showOnlyPastEvents,
+    );
 
     if (displayedEvents.isEmpty) {
       return const Center(child: Text("No events available."));
@@ -162,10 +112,8 @@ class _MainViewState extends State<MainView> {
 
         return GestureDetector(
           onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => DetailEvent()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => DetailEvent(event:event)));
           },
           child: Card(
             elevation: 3,
@@ -185,26 +133,23 @@ class _MainViewState extends State<MainView> {
                               fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(event.description,
                           maxLines: 2, overflow: TextOverflow.ellipsis),
-                      Text("📅 ${event.date.toLocal()}".split(' ')[0]),
-                      Text("💰 \$${event.price.toStringAsFixed(2)}"),
+                      Text("📅 ${DateFormat('dd/MM/yyyy').format(event.date)}"),
+                      Text("💰 ${event.price.toStringAsFixed(2)} \€"),
                     ],
                   ),
                 ),
                 IconButton(
                   icon: Icon(
-                    favoriteEvents.contains(event.id)
+                    EventService.favoriteEvents.contains(event.id)
                         ? Icons.favorite
                         : Icons.favorite_border,
-                    color:
-                        favoriteEvents.contains(event.id) ? Colors.red : null,
+                    color: EventService.favoriteEvents.contains(event.id)
+                        ? Colors.red
+                        : null,
                   ),
                   onPressed: () {
                     setState(() {
-                      if (favoriteEvents.contains(event.id)) {
-                        favoriteEvents.remove(event.id);
-                      } else {
-                        favoriteEvents.add(event.id);
-                      }
+                      EventService.toggleFavorite(event.id);
                     });
                   },
                 ),
@@ -215,22 +160,4 @@ class _MainViewState extends State<MainView> {
       },
     );
   }
-}
-
-class Event {
-  final String id;
-  final String title;
-  final String description;
-  final DateTime date;
-  final double price;
-  final String imageUrl;
-
-  Event({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.date,
-    required this.price,
-    required this.imageUrl,
-  });
 }

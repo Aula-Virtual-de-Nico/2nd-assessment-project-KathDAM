@@ -13,3 +13,27 @@ following options:
     ▪ Discard Button: Does not save changes and returns to the list.
     ▪ Cancel Button: Closes the dialog and remains in the edit view
  */
+
+import 'package:flutter/material.dart';
+
+class EditEvent extends StatelessWidget {
+  const EditEvent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit Event'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+           //info
+            print('Evento editado');
+          },
+          child: const Text('Edit event'),
+        ),
+      ),
+    );
+  }
+}
