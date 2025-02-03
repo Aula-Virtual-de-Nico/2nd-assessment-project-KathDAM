@@ -15,21 +15,39 @@ Window Title: {event title} (where {event title} is the title of the displayed e
 */
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kathproject2/utils/favourite.dart';
 import 'package:kathproject2/views/edit.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:kathproject2/utils/event.dart';  
+import 'package:kathproject2/utils/event.dart';
 
-class DetailEvent extends StatelessWidget {
+class DetailEvent extends StatefulWidget {
   final Event event;
 
   const DetailEvent({super.key, required this.event});
+  @override
+  _DetailEventState createState() => _DetailEventState();
+}
+class _DetailEventState extends State<DetailEvent> {
+  bool isFavorite = false;
 
-  Future<void> _markAsFavorite(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-   
+  @override
+  void initState() {
+    super.initState();
+    _loadFavoriteStatus();
   }
 
-  _deleteEvent(BuildContext context) async {
+  Future<void> _loadFavoriteStatus() async {
+    bool favorite = await FavoritesService.isFavorite(widget.event.id);
+    setState(() {
+      isFavorite = favorite;
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    await FavoritesService.toggleFavorite(widget.event.id);
+    _loadFavoriteStatus(); 
+  }
+
+   Future<void>_deleteEvent(BuildContext context) async {
     bool? confirmDelete = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -55,21 +73,15 @@ class DetailEvent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Details Event: ${event.title}'),
+        title: Text('Details Event: ${widget.event.title}'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.of(context).pop(); 
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.edit),
-           onPressed: () {
+            onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditEvent(), 
+                  builder: (context) => EditEvent(),
                 ),
               );
             },
@@ -79,8 +91,9 @@ class DetailEvent extends StatelessWidget {
             onPressed: () => _deleteEvent(context),
           ),
           IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () => _markAsFavorite(context),
+            icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red : null,),
+            onPressed: _toggleFavorite,
           ),
         ],
       ),
@@ -90,7 +103,7 @@ class DetailEvent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              event.title,
+              widget.event.title,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -98,27 +111,35 @@ class DetailEvent extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              event.description,
+              widget.event.description,
               style: const TextStyle(
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              "Date: ${DateFormat('dd/MM/yyyy').format(event.date)}",
+              "Date: ${DateFormat('dd/MM/yyyy').format(widget.event.date)}",
               style: const TextStyle(
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              "Price: ${event.price.toStringAsFixed(2)} \€",
+              "Price: ${widget.event.price.toStringAsFixed(2)} \€",
               style: const TextStyle(
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 8),
-            Image.network(event.imageUrl),
+            Expanded(
+              child: Center(
+                child: Image.network(
+                  widget.event.imageUrl,
+                  fit: BoxFit.contain, 
+                  width: double.infinity,
+                ),
+              ),
+            ),
           ],
         ),
       ),

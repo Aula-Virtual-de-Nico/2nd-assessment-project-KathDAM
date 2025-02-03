@@ -1,4 +1,5 @@
 import 'package:kathproject2/utils/event.dart';  
+import 'favourite.dart';
 
 class EventService {
   static List<Event> events = [
@@ -36,18 +37,17 @@ class EventService {
     ),
   ];
 
-  static List<String> favoriteEvents = [];
-
-  static List<Event> getEvents({
+  static Future<List<Event>> getEvents({
     bool filterByFavorites = false,
-    String? sortBy,
     bool showOnlyPastEvents = false,
-  }) {
+    String? sortBy,
+  }) async {
     List<Event> displayedEvents = List.from(events);
 
     if (filterByFavorites) {
+      List<String> favoriteIds = await FavoritesService.getFavorites();
       displayedEvents = displayedEvents
-          .where((event) => favoriteEvents.contains(event.id))
+          .where((event) => favoriteIds.contains(event.id))
           .toList();
     }
 
@@ -70,11 +70,7 @@ class EventService {
     return displayedEvents;
   }
 
-  static void toggleFavorite(String eventId) {
-    if (favoriteEvents.contains(eventId)) {
-      favoriteEvents.remove(eventId);
-    } else {
-      favoriteEvents.add(eventId);
-    }
+  static Future<void> toggleFavorite(String eventId) async {
+    await FavoritesService.toggleFavorite(eventId);
   }
 }
