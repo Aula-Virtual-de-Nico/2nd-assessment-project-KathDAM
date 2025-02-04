@@ -61,7 +61,11 @@ class _MainViewState extends State<MainView> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CreationEvent()),
+                    MaterialPageRoute(builder: (context) => CreationEvent(
+                      onEventCreated: (newEvent) {
+                        setState(() {});
+                      },
+                    )),
                   );
                 },
               ),
