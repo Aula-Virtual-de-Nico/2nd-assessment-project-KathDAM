@@ -15,25 +15,55 @@ following options:
  */
 
 import 'package:flutter/material.dart';
+import 'package:kathproject2/utils/event.dart';
+import 'package:kathproject2/utils/favourite.dart';
 
-class EditEvent extends StatelessWidget {
-  const EditEvent({super.key});
+class EditEvent extends StatefulWidget {
+  final Event event;
+
+  const EditEvent({super.key, required this.event});
+  @override
+  _EditEventState createState() => _EditEventState();
+}
+
+class _EditEventState extends State<EditEvent> {
+  bool isFavorite = false;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Event'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-           //info
-            print('Evento editado');
-          },
-          child: const Text('Edit event'),
-        ),
-      ),
+  void initState() {
+    super.initState();
+    _loadFavoriteStatus();
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    bool favorite = await FavoritesService.isFavorite(widget.event.id);
+    setState(() {
+      isFavorite = favorite;
+    });
+  }
+Future<void> _toggleFavorite() async {
+    await FavoritesService.toggleFavorite(widget.event.id);
+    _loadFavoriteStatus(); 
+  }
+
+   Future<void>_deleteEvent(BuildContext context) async {
+    bool? confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Confirm Deletion"),
+          content: const Text("Are you sure you want to delete this event?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
-}

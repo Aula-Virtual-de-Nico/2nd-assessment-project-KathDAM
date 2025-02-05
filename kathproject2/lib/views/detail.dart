@@ -81,7 +81,7 @@ class _DetailEventState extends State<DetailEvent> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditEvent(),
+                  builder: (context) => EditEvent(event: event),
                 ),
               );
             },
@@ -133,11 +133,20 @@ class _DetailEventState extends State<DetailEvent> {
             const SizedBox(height: 8),
             Expanded(
               child: Center(
-                child: Image.network(
-                  widget.event.imageUrl,
-                  fit: BoxFit.contain, 
-                  width: double.infinity,
-                ),
+                child: widget.event.imageBytes != null
+                    ? Image.memory(
+                        widget.event.imageBytes!,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                      )
+                    : Image.network(
+                        widget.event.imageUrl,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.image_not_supported, size: 100, color: Colors.grey);
+                        },
+                      ),
               ),
             ),
           ],

@@ -1,11 +1,4 @@
 /*
-• Window Title: "New Event."
-• Displays a form to create a new event with the following elements:
-  o Title Input: Required, between 5 and 50 characters.
-  o Description Input: Optional, between 5 and 255 characters.
-  o Date Selector: Required, must be the current date or later (with a date picker to
-  select the date).
-  o Price Input: Required, default is 0, cannot be negative.
   o Image Selector: Optional, displays an image file selector (image picker).
   o Image Preview: If an image is selected.
   o Create Button: Saves the event and returns to the list.
@@ -16,7 +9,7 @@
 unsaved changes).
 
 */
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -39,18 +32,23 @@ class _CreationEventState extends State<CreationEvent> {
   final TextEditingController _priceController = TextEditingController(text: "0");
 
   DateTime? _selectedDate;
-  File? _selectedImage;
+  Uint8List? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  bool _hasChanges = false;
+  
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+Future<void> _pickImage() async {
+  final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
+  if (pickedFile != null) {
+    final bytes = await pickedFile.readAsBytes(); // Convertir a bytes
+    setState(() {
+      _selectedImage = bytes; // Guardar la imagen en bytes
+      _hasChanges = true;
+    });
   }
+}
+
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime today = DateTime.now();
@@ -76,7 +74,8 @@ class _CreationEventState extends State<CreationEvent> {
         description: _descriptionController.text,
         date: _selectedDate!,
         price: double.parse(_priceController.text),
-        imageUrl: _selectedImage?.path ?? '',
+        imageUrl:'',
+        imageBytes: _selectedImage,
       );
 
       EventService.events.add(newEvent);
@@ -87,6 +86,11 @@ class _CreationEventState extends State<CreationEvent> {
   }
 
   void _discardChanges() {
+    if (!_hasChanges) {
+    Navigator.pop(context);
+    return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -99,7 +103,7 @@ class _CreationEventState extends State<CreationEvent> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(context,true);
               Navigator.pop(context);
             },
             child: const Text("Discard"),
@@ -124,8 +128,8 @@ class _CreationEventState extends State<CreationEvent> {
       ),
       body: Center(
         child: Container(
-          width: screenWidth * 0.5, // Ocupa la mitad del ancho de la pantalla
-          height: screenHeight * 0.6, // Ocupa el 60% de la altura
+          width: screenWidth * 0.95, 
+          height: screenHeight * 0.85, 
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -147,6 +151,11 @@ class _CreationEventState extends State<CreationEvent> {
                   TextFormField(
                     controller: _titleController,
                     decoration: const InputDecoration(labelText: "Title"),
+                    onChanged: (value) {
+                      setState(() {
+                        _hasChanges = true;
+                      });
+                    },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Title is required";
@@ -161,6 +170,11 @@ class _CreationEventState extends State<CreationEvent> {
                   TextFormField(
                     controller: _descriptionController,
                     decoration: const InputDecoration(labelText: "Description"),
+                     onChanged: (value) {
+                      setState(() {
+                        _hasChanges = true;
+                      });
+                    },
                     maxLines: 3,
                     validator: (value) {
                       if (value != null && value.isNotEmpty) {
@@ -172,27 +186,14 @@ class _CreationEventState extends State<CreationEvent> {
                     },
                   ),
                   const SizedBox(height: 10),
-                  ListTile(
-                    title: Text(
-                      _selectedDate == null
-                          ? "Select Date"
-                          : "Date: ${DateFormat('dd/MM/yyyy').format(_selectedDate!)}",
-                    ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () => _selectDate(context),
-                  ),
-                  if (_selectedDate == null)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 16.0),
-                      child: Text(
-                        "Date is required",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  const SizedBox(height: 10),
                   TextFormField(
                     controller: _priceController,
                     decoration: const InputDecoration(labelText: "Price (€)"),
+                     onChanged: (value) {
+                      setState(() {
+                        _hasChanges = true;
+                      });
+                    },
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -205,23 +206,41 @@ class _CreationEventState extends State<CreationEvent> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
+                  ListTile(
+                    title: Text(
+                      _selectedDate == null
+                          ? "Select Date"
+                          : "Date :  ${DateFormat('dd/MM/yyyy').format(_selectedDate!)}",
+                    ),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () => _selectDate(context),
+                  ),
+                  if (_selectedDate == null)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16.0),
+                      child: Text(
+                        "Date is required",
+                        style: TextStyle(color: Color.fromARGB(255, 206, 30, 18)),
+                      ),
+                    ),
+                  const SizedBox(height: 50),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ElevatedButton(
                         onPressed: _pickImage,
                         child: const Text("Select Image"),
                       ),
-                      const SizedBox(width: 10),
                       if (_selectedImage != null)
                         SizedBox(
-                          height: 50,
-                          width: 50,
-                          child: Image.file(_selectedImage!),
+                          height: 250,
+                          width: 180,
+                          child: Image.memory(_selectedImage!,fit: BoxFit.cover,),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 60),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -232,7 +251,7 @@ class _CreationEventState extends State<CreationEvent> {
                       ElevatedButton(
                         onPressed: _discardChanges,
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red),
+                            backgroundColor: const Color.fromARGB(255, 236, 155, 149)),
                         child: const Text("Discard"),
                       ),
                     ],

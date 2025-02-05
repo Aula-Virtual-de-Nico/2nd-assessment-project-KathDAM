@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class Event {
   final String id;
   final String title;
@@ -5,6 +7,7 @@ class Event {
   final DateTime date;
   final double price;
   final String imageUrl;
+  final Uint8List? imageBytes;
 
   Event({
     required this.id,
@@ -13,5 +16,6 @@ class Event {
     required this.date,
     required this.price,
     required this.imageUrl,
+    this.imageBytes,
   });
 }

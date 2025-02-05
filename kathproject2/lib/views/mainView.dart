@@ -149,7 +149,9 @@ class _MainViewState extends State<MainView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Image.network(event.imageUrl, fit: BoxFit.cover),
+                          child:  event.imageBytes != null
+                          ? Image.memory(event.imageBytes!, fit: BoxFit.cover)
+                          : Image.network(event.imageUrl, fit: BoxFit.cover),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
