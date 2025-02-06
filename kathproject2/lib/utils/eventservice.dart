@@ -73,4 +73,9 @@ class EventService {
   static Future<void> toggleFavorite(String eventId) async {
     await FavoritesService.toggleFavorite(eventId);
   }
+
+static Future<void> deleteEvent(String eventId) async {
+  events.removeWhere((event) => event.id == eventId);
+}
+
 }

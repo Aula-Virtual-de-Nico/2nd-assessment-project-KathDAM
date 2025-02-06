@@ -16,6 +16,7 @@ Window Title: {event title} (where {event title} is the title of the displayed e
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kathproject2/utils/eventservice.dart';
 import 'package:kathproject2/utils/favourite.dart';
 import 'package:kathproject2/views/edit.dart';
 import 'package:kathproject2/utils/event.dart';
@@ -51,27 +52,44 @@ class _DetailEventState extends State<DetailEvent> {
     _loadFavoriteStatus(); 
   }
 
-   Future<void>_deleteEvent(BuildContext context) async {
-    bool? confirmDelete = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Confirm Deletion"),
-          content: const Text("Are you sure you want to delete this event?"),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
+Future<void> _deleteEvent(BuildContext context) async {
+  bool? confirmDelete = await showDialog<bool>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Confirm Deletion"),
+        content: const Text("Are you sure you want to delete this event?"),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirmDelete == true) {
+    try {
+      await EventService.deleteEvent(widget.event.id);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event deleted successfully')),
+      );
+
+      Navigator.of(context).pop();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete event: $e')),
+      );
+    }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
