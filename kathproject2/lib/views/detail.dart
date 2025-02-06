@@ -13,6 +13,7 @@ Window Title: {event title} (where {event title} is the title of the displayed e
   o Button to delete the event (with confirmation dialog).
   o Button to save the event as a favorite.
 */
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kathproject2/utils/favourite.dart';
@@ -21,17 +22,20 @@ import 'package:kathproject2/utils/event.dart';
 
 class DetailEvent extends StatefulWidget {
   final Event event;
-
+  
   const DetailEvent({super.key, required this.event});
+  
   @override
   _DetailEventState createState() => _DetailEventState();
 }
 class _DetailEventState extends State<DetailEvent> {
   bool isFavorite = false;
+  late Event currentEvent;
 
   @override
   void initState() {
     super.initState();
+    currentEvent = widget.event;
     _loadFavoriteStatus();
   }
 
@@ -81,7 +85,13 @@ class _DetailEventState extends State<DetailEvent> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditEvent(event: event),
+                  builder: (context) => EditEvent(
+                    event: widget.event,
+                    onEventUpdated: (updatedEvent){
+                      setState(() {
+                       currentEvent = updatedEvent;
+                      });
+                    },),
                 ),
               );
             },
