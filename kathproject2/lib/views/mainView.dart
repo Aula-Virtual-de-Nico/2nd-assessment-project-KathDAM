@@ -83,7 +83,6 @@ class _MainViewState extends State<MainView> {
       ),
     );
   }
-
   // Recargar favoritos cada vez que la vista se reconstruya
   Widget buildEventGrid({
     bool filterByFavorites = false,
@@ -137,6 +136,9 @@ class _MainViewState extends State<MainView> {
                         builder: (context) => DetailEvent(event: event),
                       ),
                     ).then((value) {
+                      if (value != null && value is Event) {
+                        setState(() {}); // Recargamos lo editado
+                      }
                       setState(() {
                         // Recargamos favoritos después de volver de los detalles
                         _favoritesUpdated = true;

@@ -41,14 +41,14 @@ class _DetailEventState extends State<DetailEvent> {
   }
 
   Future<void> _loadFavoriteStatus() async {
-    bool favorite = await FavoritesService.isFavorite(widget.event.id);
+    bool favorite = await FavoritesService.isFavorite(currentEvent.id);
     setState(() {
       isFavorite = favorite;
     });
   }
 
   Future<void> _toggleFavorite() async {
-    await FavoritesService.toggleFavorite(widget.event.id);
+    await FavoritesService.toggleFavorite(currentEvent.id);
     _loadFavoriteStatus(); 
   }
 
@@ -75,7 +75,7 @@ Future<void> _deleteEvent(BuildContext context) async {
 
   if (confirmDelete == true) {
     try {
-      await EventService.deleteEvent(widget.event.id);
+      await EventService.deleteEvent(currentEvent.id);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Event deleted successfully')),
@@ -95,23 +95,29 @@ Future<void> _deleteEvent(BuildContext context) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Details Event: ${widget.event.title}'),
+        title: Text('Details Event: ${currentEvent.title}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final updatedEvent = await Navigator.push<Event>(
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditEvent(
-                    event: widget.event,
+                    event: currentEvent,
                     onEventUpdated: (updatedEvent){
                       setState(() {
                        currentEvent = updatedEvent;
                       });
-                    },),
+                    },
+                  ),
                 ),
               );
+              if (updatedEvent != null) {
+                setState(() {
+                  currentEvent = updatedEvent;
+                });
+              }
             },
           ),
           IconButton(
@@ -131,7 +137,7 @@ Future<void> _deleteEvent(BuildContext context) async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.event.title,
+              currentEvent.title,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -139,21 +145,21 @@ Future<void> _deleteEvent(BuildContext context) async {
             ),
             const SizedBox(height: 8),
             Text(
-              widget.event.description,
+              currentEvent.description,
               style: const TextStyle(
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              "Date: ${DateFormat('dd/MM/yyyy').format(widget.event.date)}",
+              "Date: ${DateFormat('dd/MM/yyyy').format(currentEvent.date)}",
               style: const TextStyle(
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              "Price: ${widget.event.price.toStringAsFixed(2)} \€",
+              "Price: ${currentEvent.price.toStringAsFixed(2)} \€",
               style: const TextStyle(
                 fontSize: 16,
               ),
@@ -161,14 +167,14 @@ Future<void> _deleteEvent(BuildContext context) async {
             const SizedBox(height: 8),
             Expanded(
               child: Center(
-                child: widget.event.imageBytes != null
+                child: currentEvent.imageBytes != null
                     ? Image.memory(
-                        widget.event.imageBytes!,
+                        currentEvent.imageBytes!,
                         fit: BoxFit.contain,
                         width: double.infinity,
                       )
                     : Image.network(
-                        widget.event.imageUrl,
+                        currentEvent.imageUrl,
                         fit: BoxFit.contain,
                         width: double.infinity,
                         errorBuilder: (context, error, stackTrace) {

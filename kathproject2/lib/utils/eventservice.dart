@@ -74,8 +74,16 @@ class EventService {
     await FavoritesService.toggleFavorite(eventId);
   }
 
-static Future<void> deleteEvent(String eventId) async {
-  events.removeWhere((event) => event.id == eventId);
-}
+  static Future<void> deleteEvent(String eventId) async {
+    events.removeWhere((event) => event.id == eventId);
+  }
+
+  static Future<void> updateEvent(Event updatedEvent) async {
+    print(updatedEvent.imageUrl);
+    final index = events.indexWhere((event) => event.id == updatedEvent.id);
+    if (index != -1) {
+      events[index] = updatedEvent;
+    }
+  }
 
 }
