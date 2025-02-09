@@ -13,7 +13,6 @@ following options:
     ▪ Discard Button: Does not save changes and returns to the list.
     ▪ Cancel Button: Closes the dialog and remains in the edit view
  */
-
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,8 +24,7 @@ class EditEvent extends StatefulWidget {
   final Event event;
   final Function(Event) onEventUpdated;
 
-  const EditEvent(
-      {super.key, required this.event, required this.onEventUpdated});
+  const EditEvent({super.key, required this.event, required this.onEventUpdated});
 
   @override
   _EditEventState createState() => _EditEventState();
@@ -47,12 +45,15 @@ class _EditEventState extends State<EditEvent> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.event.title);
-    _descriptionController =
-        TextEditingController(text: widget.event.description);
-    _priceController =
-        TextEditingController(text: widget.event.price.toString());
+    _descriptionController = TextEditingController(text: widget.event.description);
+    _priceController = TextEditingController(text: widget.event.price.toString());
     _selectedDate = widget.event.date;
     _selectedImage = widget.event.imageBytes;
+
+    // 🔔 Detectar cambios automáticamente
+    _titleController.addListener(_detectChanges);
+    _descriptionController.addListener(_detectChanges);
+    _priceController.addListener(_detectChanges);
   }
 
   void _detectChanges() {
@@ -61,15 +62,12 @@ class _EditEventState extends State<EditEvent> {
         _priceController.text != widget.event.price.toString() ||
         _selectedDate != widget.event.date ||
         _selectedImage != widget.event.imageBytes) {
-      setState(() {
-        _hasChanges = true;
-      });
+      setState(() => _hasChanges = true);
     }
   }
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
       final bytes = await pickedFile.readAsBytes();
       setState(() {
@@ -87,11 +85,10 @@ class _EditEventState extends State<EditEvent> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime today = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: today,
+      firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
 
@@ -103,32 +100,31 @@ class _EditEventState extends State<EditEvent> {
     }
   }
 
- void _saveEvent() async {
-  if (_formKey.currentState!.validate()) {
-    final updatedEvent = Event(
-      id: widget.event.id,
-      title: _titleController.text,
-      description: _descriptionController.text,
-      date: _selectedDate,
-      price: double.parse(_priceController.text),
-      imageUrl: '', 
-      imageBytes: _selectedImage,
-    );
+  void _saveEvent() async {
+    if (_formKey.currentState!.validate()) {
+      final updatedEvent = Event(
+        id: widget.event.id,
+        title: _titleController.text,
+        description: _descriptionController.text,
+        date: _selectedDate,
+        price: double.parse(_priceController.text),
+        imageBytes: _selectedImage,
+        imageUrl: _selectedImage == null ? 'assets/plantilla.jpeg' : widget.event.imageUrl,
+      );
 
-    await EventService.updateEvent(updatedEvent); 
-    widget.onEventUpdated(updatedEvent); 
+      await EventService.updateEvent(updatedEvent);
+      widget.onEventUpdated(updatedEvent);
 
-    Navigator.pop(context, updatedEvent); 
+      Navigator.pop(context, updatedEvent);
+    }
   }
-}
 
   Future<void> _confirmDiscardChanges() async {
-    final bool? shouldDiscard = await showDialog(
+    final shouldDiscard = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Unsaved Changes"),
-        content: const Text(
-            "You have unsaved changes. Do you want to save before leaving?"),
+        content: const Text("You have unsaved changes. What would you like to do?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -142,7 +138,7 @@ class _EditEventState extends State<EditEvent> {
             child: const Text("Save"),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true), 
+            onPressed: () => Navigator.pop(context, true),
             child: const Text("Discard"),
           ),
         ],
@@ -186,11 +182,6 @@ class _EditEventState extends State<EditEvent> {
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: "Title"),
-                  onChanged: (value) {
-                    setState(() {
-                      _hasChanges = true;
-                    });
-                  },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return "Title is required";
@@ -205,11 +196,6 @@ class _EditEventState extends State<EditEvent> {
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(labelText: "Description"),
-                  onChanged: (value) {
-                    setState(() {
-                      _hasChanges = true;
-                    });
-                  },
                   maxLines: 3,
                   validator: (value) {
                     if (value != null && value.isNotEmpty) {
@@ -224,11 +210,6 @@ class _EditEventState extends State<EditEvent> {
                 TextFormField(
                   controller: _priceController,
                   decoration: const InputDecoration(labelText: "Price (€)"),
-                  onChanged: (value) {
-                    setState(() {
-                      _hasChanges = true;
-                    });
-                  },
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -244,14 +225,12 @@ class _EditEventState extends State<EditEvent> {
                 const SizedBox(height: 20),
                 ListTile(
                   title: Text(
-                    _selectedDate == null
-                        ? "Select Date"
-                        : "Date :  ${DateFormat('dd/MM/yyyy').format(_selectedDate)}",
+                    "Date: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}",
                   ),
                   trailing: const Icon(Icons.calendar_today),
                   onTap: () => _selectDate(context),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -259,20 +238,29 @@ class _EditEventState extends State<EditEvent> {
                       onPressed: _pickImage,
                       child: const Text("Select Image"),
                     ),
-                    if (_selectedImage != null) ...[
-                      SizedBox(
-                        height: 250,
-                        width: 180,
-                        child: Image.memory(_selectedImage!, fit: BoxFit.cover),
+                    if (_selectedImage != null ||
+                        widget.event.imageBytes != null ||
+                        widget.event.imageUrl != null)
+                      Column(
+                        children: [
+                          SizedBox(
+                            height: 150,
+                            width: 150,
+                            child: _selectedImage != null
+                                ? Image.memory(_selectedImage!, fit: BoxFit.cover)
+                                : widget.event.imageBytes != null
+                                    ? Image.memory(widget.event.imageBytes!, fit: BoxFit.cover)
+                                    : Image.asset('assets/plantilla.jpeg', fit: BoxFit.cover),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: _removeImage,
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: _removeImage,
-                      ),
-                    ],
                   ],
                 ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -282,9 +270,7 @@ class _EditEventState extends State<EditEvent> {
                     ),
                     ElevatedButton(
                       onPressed: _handleBackNavigation,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 236, 155, 149)),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                       child: const Text("Discard"),
                     ),
                   ],
