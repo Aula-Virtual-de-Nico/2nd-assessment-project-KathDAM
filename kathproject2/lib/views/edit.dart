@@ -40,6 +40,8 @@ class _EditEventState extends State<EditEvent> {
   Uint8List? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _hasChanges = false;
+  bool _isImageRemoved = false;
+
 
   @override
   void initState() {
@@ -50,7 +52,6 @@ class _EditEventState extends State<EditEvent> {
     _selectedDate = widget.event.date;
     _selectedImage = widget.event.imageBytes;
 
-    // 🔔 Detectar cambios automáticamente
     _titleController.addListener(_detectChanges);
     _descriptionController.addListener(_detectChanges);
     _priceController.addListener(_detectChanges);
@@ -72,6 +73,7 @@ class _EditEventState extends State<EditEvent> {
       final bytes = await pickedFile.readAsBytes();
       setState(() {
         _selectedImage = bytes;
+        _isImageRemoved = false;
         _hasChanges = true;
       });
     }
@@ -80,6 +82,7 @@ class _EditEventState extends State<EditEvent> {
   void _removeImage() {
     setState(() {
       _selectedImage = null;
+      _isImageRemoved = true;
       _hasChanges = true;
     });
   }
@@ -238,9 +241,7 @@ class _EditEventState extends State<EditEvent> {
                       onPressed: _pickImage,
                       child: const Text("Select Image"),
                     ),
-                    if (_selectedImage != null ||
-                        widget.event.imageBytes != null ||
-                        widget.event.imageUrl != null)
+                    if (!_isImageRemoved)
                       Column(
                         children: [
                           SizedBox(
@@ -249,7 +250,9 @@ class _EditEventState extends State<EditEvent> {
                             child: _selectedImage != null
                                 ? Image.memory(_selectedImage!, fit: BoxFit.cover)
                                 : widget.event.imageBytes != null
-                                    ? Image.memory(widget.event.imageBytes!, fit: BoxFit.cover)
+                                   ? Image.memory(widget.event.imageBytes!, fit: BoxFit.cover) 
+                                : widget.event.imageUrl != null && widget.event.imageUrl!.isNotEmpty
+                                    ? Image.asset(widget.event.imageUrl!, fit: BoxFit.cover) 
                                     : Image.asset('assets/plantilla.jpeg', fit: BoxFit.cover),
                           ),
                           IconButton(

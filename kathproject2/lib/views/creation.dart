@@ -74,7 +74,7 @@ Future<void> _pickImage() async {
         description: _descriptionController.text,
         date: _selectedDate!,
         price: double.parse(_priceController.text),
-        imageUrl:'',
+        imageUrl: _selectedImage == null ? 'assets/plantilla.jpeg' : '',
         imageBytes: _selectedImage,
       );
 
@@ -232,12 +232,13 @@ Future<void> _pickImage() async {
                         onPressed: _pickImage,
                         child: const Text("Select Image"),
                       ),
-                      if (_selectedImage != null)
-                        SizedBox(
-                          height: 250,
-                          width: 180,
-                          child: Image.memory(_selectedImage!,fit: BoxFit.cover,),
-                        ),
+                      SizedBox(
+                        height: 250,
+                        width: 180,
+                        child: _selectedImage != null
+                            ? Image.memory(_selectedImage!, fit: BoxFit.cover)
+                            : Image.asset('assets/plantilla.jpeg', fit: BoxFit.cover),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 60),
